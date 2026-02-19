@@ -7,6 +7,11 @@
           Button
         </v-btn>
       </div>
+      <div>
+        <h1 class="text-4xl font-bold text-green-400">
+          Tailwind Working 🚀
+        </h1>
+      </div>
     </v-app>
   </NuxtLayout>
 </template>

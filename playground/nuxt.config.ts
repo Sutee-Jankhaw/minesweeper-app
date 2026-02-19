@@ -1,7 +1,7 @@
 import vuetify, { transformAssetUrls } from 'vite-plugin-vuetify'
 
 export default defineNuxtConfig({
-  modules: ['my-module'],
+  modules: ['@nuxtjs/tailwindcss'],
   devtools: { enabled: true },
   build: {
     transpile: ['vuetify'],
