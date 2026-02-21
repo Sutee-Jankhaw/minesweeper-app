@@ -13,6 +13,14 @@
         </v-app-bar-title>
       </v-app-bar>
       <v-main>
+        <div class="d-flex justify-center">
+          <div class="mb-2 font-bold">
+            Revealed : {{ revealedCount }}
+          </div>
+          <div class="mb-2 font-bold">
+            🚩 Flags Left: {{ flagsLeft }}
+          </div>
+        </div>
         <v-container class="d-flex justify-center mt-10">
           <div class="board">
             <div
@@ -38,6 +46,17 @@
             v-model="showGameOver"
             @restart="restartGame"
           />
+          <WinDialog
+            v-model="showGameWin"
+            @restart="restartGame"
+          />
+          <v-snackbar
+            v-model="showNoFlagWarning"
+            timeout="2000"
+            color="red"
+          >
+            No Flag left
+          </v-snackbar>
         </v-container>
       </v-main>
     </v-app>
@@ -46,11 +65,16 @@
 
 <script setup lang="ts">
 import { ref } from 'vue'
+import WinDialog from '@/components/game_win.vue'
 import GameOverDialog from '@/components/game_over.vue'
 
 const rows = 13
 const cols = 6
 const totalMines = 10
+const flagCount = ref(0)
+const revealedCount = ref(0)
+const showNoFlagWarning = ref(false)
+const flagsLeft = computed(() => totalMines - flagCount.value)
 
 type Cell = {
   isMine: boolean
@@ -58,6 +82,7 @@ type Cell = {
   isFlagged: boolean
   adjacent: number
 }
+
 function createBoard(): Cell[] {
   const board: Cell[] = Array(rows * cols).fill(null).map(() => ({
     isMine: false,
@@ -111,16 +136,30 @@ function toggleFlag(index: number) {
   const cell = cells.value[index];
   if (!cell || cell.isRevealed) return;
 
-  cell.isFlagged = !cell.isFlagged;
+  if(!cell.isFlagged) {
+    if(flagCount.value >= totalMines) {
+      showNoFlagWarning.value = true
+      return
+    }
+    cell.isFlagged = true
+    flagCount.value++
+  }
+  else {
+    cell.isFlagged = false
+    flagCount.value--
+  }
+  checkWin()
 }
 
 const showGameOver = ref(false)
+const showGameWin = ref(false)
 
 function revealCell(index: number) {
   const cell = cells.value[index]
   if (!cell || cell.isRevealed || cell.isFlagged) return
 
   cell.isRevealed = true
+  revealedCount.value++
   if (cell.isMine) {
     showGameOver.value = true
     return
@@ -164,9 +203,27 @@ function floodFill(index: number) {
     }
   }
 }
+function checkWin() {
+  if (flagCount.value !== totalMines) return
+
+  const allCorrect = cells.value.every(cell => {
+    if (cell.isFlagged) {
+      return cell.isMine
+    }
+    return true
+  })
+
+  if (allCorrect) {
+    showGameWin.value = true
+  }
+}
 const cells = ref<Cell[]>(createBoard())
 function restartGame() {
   cells.value = createBoard()
+  flagCount.value = 0
+  revealedCount.value = 0
+  showGameOver.value = false 
+  showGameWin.value = false
 }
 
 </script>
