@@ -34,6 +34,10 @@
               <span v-if="!cell.isRevealed && cell.isFlagged">🚩</span>
             </div>
           </div>
+          <GameOverDialog
+            v-model="showGameOver"
+            @restart="restartGame"
+          />
         </v-container>
       </v-main>
     </v-app>
@@ -42,6 +46,7 @@
 
 <script setup lang="ts">
 import { ref } from 'vue'
+import GameOverDialog from '@/components/game_over.vue'
 
 const rows = 13
 const cols = 6
@@ -108,13 +113,16 @@ function toggleFlag(index: number) {
 
   cell.isFlagged = !cell.isFlagged;
 }
+
+const showGameOver = ref(false)
+
 function revealCell(index: number) {
   const cell = cells.value[index]
   if (!cell || cell.isRevealed || cell.isFlagged) return
 
   cell.isRevealed = true
   if (cell.isMine) {
-    alert('Game Over 💥')
+    showGameOver.value = true
     return
   }
   if (cell.adjacent === 0) {
@@ -156,9 +164,10 @@ function floodFill(index: number) {
     }
   }
 }
-
 const cells = ref<Cell[]>(createBoard())
-
+function restartGame() {
+  cells.value = createBoard()
+}
 
 </script>
 
