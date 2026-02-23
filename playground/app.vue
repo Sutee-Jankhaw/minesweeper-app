@@ -13,12 +13,24 @@
         </v-app-bar-title>
       </v-app-bar>
       <v-main>
-        <div class="d-flex justify-center">
-          <div class="mb-2 font-bold">
-            Revealed : {{ revealedCount }}
+        <div class="d-flex justify-center m-8">
+          <div>
+            <h1>
+              How To Play:
+            </h1>
+            <h2>
+              Safe squares have numbers telling you how many mines touch the square.<br>
+              You can use the number clues to solve the game by opening all of the safe squares.<br>
+              If you click on a mine you lose the game!<br>
+            </h2>
           </div>
+        </div>
+        <div class="d-flex justify-center mt-10 gap-10">
           <div class="mb-2 font-bold">
             🚩 Flags Left: {{ flagsLeft }}
+          </div>
+          <div class="mb-2 font-bold">
+            Revealed : {{ revealedCount }}
           </div>
         </div>
         <v-container class="d-flex justify-center mt-10">
@@ -57,6 +69,10 @@
           >
             No Flag left
           </v-snackbar>
+          <div class="d-flex flex-col ml-24">
+            <div>Revealed Streak: {{ streakCount }}</div>
+            <div>Power Up</div>
+          </div>
         </v-container>
       </v-main>
     </v-app>
@@ -71,6 +87,7 @@ import GameOverDialog from '@/components/game_over.vue'
 const rows = 13
 const cols = 6
 const totalMines = 10
+const streakCount = ref(0)
 const flagCount = ref(0)
 const revealedCount = ref(0)
 const showNoFlagWarning = ref(false)
@@ -148,7 +165,6 @@ function toggleFlag(index: number) {
     cell.isFlagged = false
     flagCount.value--
   }
-  checkWin()
 }
 
 const showGameOver = ref(false)
@@ -159,6 +175,7 @@ function revealCell(index: number) {
   if (!cell || cell.isRevealed || cell.isFlagged) return
 
   cell.isRevealed = true
+  streakCount.value++
   revealedCount.value++
   if (cell.isMine) {
     showGameOver.value = true
@@ -167,6 +184,7 @@ function revealCell(index: number) {
   if (cell.adjacent === 0) {
     floodFill(index)
   }
+  checkWin()
 }
 function floodFill(index: number) {
   const row = Math.floor(index / cols)
@@ -207,8 +225,8 @@ function checkWin() {
   if (flagCount.value !== totalMines) return
 
   const allCorrect = cells.value.every(cell => {
-    if (cell.isFlagged) {
-      return cell.isMine
+    if (!cell.isMine) {
+      return cell.isRevealed
     }
     return true
   })
@@ -222,6 +240,7 @@ function restartGame() {
   cells.value = createBoard()
   flagCount.value = 0
   revealedCount.value = 0
+  streakCount.value = 0
   showGameOver.value = false 
   showGameWin.value = false
 }
