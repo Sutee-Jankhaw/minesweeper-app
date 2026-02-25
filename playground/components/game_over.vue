@@ -26,7 +26,7 @@ const props = defineProps<{
 
 const emit = defineEmits<{
   (e: 'update:modelValue', value: boolean): void
-  (e: 'restart'): void
+  (e: 'restart'): void;
 }>()
 
 function emitClose(value: boolean) {

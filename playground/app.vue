@@ -74,7 +74,10 @@
           />
           <WinDialog
             v-model="showGameWin"
+            :revealedCount="revealedCount"
+            :time="time"
             @restart="restartGame"
+            @record="handleRecord"
           />
           <v-snackbar
             v-model="showNoFlagWarning"
@@ -94,7 +97,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { onMounted,ref } from 'vue'
 import WinDialog from '@/components/game_win.vue'
 import GameOverDialog from '@/components/game_over.vue'
 
@@ -130,14 +133,37 @@ interface Score {
   score: number
   created_at: string
 }
+const scores = ref<Score[]>([])
 
-const { data: scores, error } = await useFetch<Score[]>(
-  "http://localhost:5000/api/scores"
-)
+async function loadScores() {
+  try {
+    scores.value = await $fetch<Score[]>(
+      "http://localhost:5000/api/scores"
+    )
+  } catch (err: any) {
+    err.value = err.message
+  }
+}
 function stopTimer() {
   if (timer.value !== null) {
     clearInterval(timer.value)
     timer.value = null
+  }
+}
+async function handleRecord(username: string) {
+  try {
+    await $fetch("http://localhost:5000/api/scores", {
+      method: "POST",
+      body: {
+        username,
+        revealedCell: revealedCount.value,
+        time: time.value
+      }
+    })
+    loadScores()
+    restartGame()
+  } catch (err) {
+    console.error(err)
   }
 }
 function createBoard(): Cell[] {
@@ -205,6 +231,7 @@ function toggleFlag(index: number) {
     cell.isFlagged = false
     flagCount.value--
   }
+  checkWin()
 }
 
 const showGameOver = ref(false)
@@ -292,6 +319,9 @@ function restartGame() {
   showGameOver.value = false 
   showGameWin.value = false
 }
+onMounted(() => {
+  loadScores()
+})
 
 </script>
 
