@@ -37,6 +37,17 @@
           </div>
         </div>
         <v-container class="d-flex justify-center mt-10">
+          <div class="mr-24">
+            <h1>Leaderboard</h1>
+            <div v-if="error">
+              Error loading data
+            </div>
+            <ul v-else>
+              <li v-for="scoreBoard in scores" :key="scoreBoard.id">
+                {{ scoreBoard.username }} - {{ scoreBoard.score }}
+              </li>
+            </ul>
+          </div>
           <div class="board">
             <div
               v-for="(cell, index) in cells"
@@ -113,7 +124,16 @@ function startTimer() {
     time.value++
   }, 1000)
 }
+interface Score {
+  id: number
+  username: string
+  score: number
+  created_at: string
+}
 
+const { data: scores, error } = await useFetch<Score[]>(
+  "http://localhost:5000/api/scores"
+)
 function stopTimer() {
   if (timer.value !== null) {
     clearInterval(timer.value)
