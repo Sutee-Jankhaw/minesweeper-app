@@ -36,10 +36,7 @@
         <v-container class="d-flex justify-center mt-10">
           <div class="mr-24">
             <h1>Leaderboard</h1>
-            <div v-if="error">
-              Error loading data
-            </div>
-            <ul v-else>
+            <ul>
               <li v-for="scoreBoard in scores" :key="scoreBoard.id">
                 {{ scoreBoard.username }} - {{ scoreBoard.score }}
               </li>
