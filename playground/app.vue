@@ -27,13 +27,13 @@
         </div>
         <div class="d-flex justify-center mt-10 gap-10">
           <div class="mb-2 font-bold">
-            🚩 Flags Left: {{ flagsLeft }}
+            <v-icon icon="mdi-flag-variant"/> Flags Left: {{ flagsLeft }}
           </div>
           <div class="mb-2 font-bold">
             Revealed : {{ revealedCount }}
           </div>
           <div class="font-bold mb-2">
-            ⏱ Time: {{ time }}s
+            <v-icon icon="mdi-clock-outline"/> Time: {{ time }}s
           </div>
         </div>
         <v-container class="d-flex justify-center mt-10">
@@ -64,8 +64,8 @@
               <span v-if="cell.isRevealed && !cell.isMine && cell.adjacent > 0">
                 {{ cell.adjacent }}
               </span>
-              <span v-if="cell.isRevealed && cell.isMine">💣</span>
-              <span v-if="!cell.isRevealed && cell.isFlagged">🚩</span>
+              <span v-if="cell.isRevealed && cell.isMine"><v-icon icon="mdi-bomb"/></span>
+              <span v-if="!cell.isRevealed && cell.isFlagged"><v-icon icon="mdi-flag-variant"/></span>
             </div>
           </div>
           <GameOverDialog
@@ -86,9 +86,27 @@
           >
             No Flag left
           </v-snackbar>
-          <div class="d-flex flex-col ml-24">
+          <div class="d-flex flex-col ml-24 gap-5">
             <div>Revealed Streak: {{ streakCount }}</div>
-            <div>Power Up</div>
+            <div>Power Up:</div>
+            <v-btn
+              :disabled="!canUseSafeReveal"
+              @click="useSafeReveal"
+            >
+              <v-icon icon="mdi-magnify"/>Safe Reveal (Streak 5)
+            </v-btn>
+            <v-btn
+              :disabled="!canUseShield"
+              @click="useShield"
+            >
+              <v-icon icon="mdi-shield"/> Shield (Streak 8)
+            </v-btn>
+            <v-btn
+              :disabled="!canUseAutoFlag"
+              @click="useAutoFlag"
+            >
+              <v-icon icon="mdi-flag-variant"/> AutoFlag (Streak 12)
+            </v-btn>
           </div>
         </v-container>
       </v-main>
@@ -249,6 +267,10 @@ function revealCell(index: number) {
   streakCount.value++
   revealedCount.value++
   if (cell.isMine) {
+    if (hasShield.value) {
+      hasShield.value = false
+      return
+    }
     stopTimer()
     showGameOver.value = true
     return
@@ -308,6 +330,58 @@ function checkWin() {
     showGameWin.value = true
   }
 }
+const safeRevealLeft = ref(1)
+const shieldLeft = ref(1)
+const autoFlagLeft = ref(1)
+
+const hasShield = ref(false)
+
+const canUseSafeReveal = computed(() =>
+  streakCount.value >= 5 && safeRevealLeft.value > 0
+)
+
+const canUseShield = computed(() =>
+  streakCount.value >= 8 && shieldLeft.value > 0
+)
+
+const canUseAutoFlag = computed(() =>
+  streakCount.value >= 12 && autoFlagLeft.value > 0
+)
+
+function useSafeReveal() {
+  if (!canUseSafeReveal.value) return
+  const safeCells = cells.value
+    .map((cell, index) => ({ cell, index }))
+    .filter(item => !item.cell.isMine && !item.cell.isRevealed)
+
+  if (!safeCells.length) return
+
+  const random = safeCells[Math.floor(Math.random() * safeCells.length)]
+  revealCell(random!.index)
+  streakCount.value = streakCount.value - 5
+  safeRevealLeft.value--
+}
+
+function useShield() {
+  if (!canUseShield.value) return
+  hasShield.value = true
+  streakCount.value = streakCount.value - 8
+}
+function useAutoFlag() {
+  const hiddenMines = cells.value
+   .map((cell, index) => ({ cell, index }))
+   .filter(item => item.cell.isMine && !item.cell.isFlagged)
+
+  if (!hiddenMines.length) return
+
+  const random = hiddenMines[Math.floor(Math.random() * hiddenMines.length)]
+
+  random!.cell.isFlagged = true
+  flagCount.value++
+
+  autoFlagLeft.value--
+}
+
 const cells = ref<Cell[]>(createBoard())
 function restartGame() {
   stopTimer()
@@ -316,6 +390,9 @@ function restartGame() {
   flagCount.value = 0
   revealedCount.value = 0
   streakCount.value = 0
+  safeRevealLeft.value = 1
+  shieldLeft.value = 1
+  autoFlagLeft.value = 1
   showGameOver.value = false 
   showGameWin.value = false
 }
