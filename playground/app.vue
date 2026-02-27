@@ -5,11 +5,8 @@
         :elevation="5"
         color="teal-darken-4"
       >
-        <template #prepend>
-          <v-app-bar-nav-icon />
-        </template>
         <v-app-bar-title>
-          Minesweeper
+          <div class="d-flex justify-center">Minesweeper</div>
         </v-app-bar-title>
       </v-app-bar>
       <v-main>
@@ -366,6 +363,7 @@ function useShield() {
   if (!canUseShield.value) return
   hasShield.value = true
   streakCount.value = streakCount.value - 8
+  shieldLeft.value--
 }
 function useAutoFlag() {
   const hiddenMines = cells.value
